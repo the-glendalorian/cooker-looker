@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "238191136983",
+    "project_id": "cooker-looker",
+    "storage_bucket": "cooker-looker.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:238191136983:android:d197fd1561838991b02092",
+        "android_client_info": {
+          "package_name": "com.anonymous.cookerlooker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxhgbk7hxgks-vJFvOZptefIkT6eMAkGM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
