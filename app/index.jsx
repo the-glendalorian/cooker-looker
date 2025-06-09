@@ -1,37 +1,79 @@
-import { Text, View, StyleSheet, Image, TouchableOpacity } from "react-native";
-import SpoonImage from "@/assets/images/newIcon.png";
+import { Text, View, StyleSheet, Image, TextInput, FlatList } from "react-native";
+import { Icon } from "react-native-elements";
 import { useRouter } from "expo-router";
-import 'setimmediate';
+import { useEffect, useState } from "react";
+import { collection, getDocs, query, where } from '@react-native-firebase/firestore';
+import { db } from "../FirebaseConfig";
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_700Bold
+} from "@expo-google-fonts/poppins";
 
 const HomeScreen = () => {
   const router = useRouter();
 
+  useFonts({
+    Poppins_400Regular,
+    Poppins_700Bold
+  });
+
+  const [foodItems, setFoodItems] = useState([]);
+  const [searchValue, setSearchValue] = useState("");
+  const itemsCollection = collection(db, 'items');
+
+  useEffect(() => {
+      fetchItems();
+  }, [searchValue]);
+
+  const fetchItems = async () => {
+      const q = query(itemsCollection, where("name", ">=", searchValue.toLowerCase()), where("name", "<=", searchValue.toLowerCase() + "\uf8ff"));
+      const data = await getDocs(q);
+      setFoodItems(data.docs.map((doc) => {
+          return {...doc.data(), id: doc.id}
+      }));
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Cooker Looker</Text>
-      <Image source={SpoonImage} style={styles.image}/>
-    
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={() => router.push("/search")}
-      >
-        <Text style={styles.buttonText}>Search for an item</Text>
-      </TouchableOpacity>
+      <TextInput 
+        placeholder="Search..."
+        value={searchValue}
+        onChangeText={text => {
+            fetchItems();
+            setSearchValue(text);
+        }}
+        style={styles.searchBar}
+        placeholderTextColor={"white"}
+      />
+      <FlatList
+        data = {foodItems}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+            <View style={styles.foodItem}>
+                <Image 
+                    style={styles.image}
+                    source={{uri: item.image}}
+                />
+                <View style={styles.foodTextContainer}>
+                    <Text style={styles.foodName}>{item.name}</Text>
+                    <Text style={styles.foodLocation}>{item.location}</Text>
+                </View>
 
-      <TouchableOpacity 
-        style={styles.button2}
-        onPress={() => router.push("/kitchen")}
-      >
-        <Text style={styles.buttonText}>View my kitchen</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity 
-        style={styles.button3}
-        onPress={() => router.push("/map")}
-      >
-        <Text style={styles.buttonText2}>Kitchen Map</Text>
-      </TouchableOpacity>
-    
+                <Icon
+                  raised
+                  name="arrow-forward"
+                  type="material-icons"
+                  size={20}
+                  onPress={() => router.push({
+                    pathname: "/kitchen",
+                    params: { name: item.name, location: item.location, image: item.image }
+                  })}
+                  color={"#6b0000"}
+                />
+            </View>
+        )}
+      />
     </View>
   );
 };
@@ -39,66 +81,58 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20
+    padding: 20,
+    backgroundColor: "#fff",
+    flexDirection: "column",
+  },
+
+  foodItem: {
+      flexDirection: "row",
+      justifyContent: "flex-start",
+      backgroundColor: "#fbe3ab",
+      padding: 15,
+      borderRadius: 15,
+      marginVertical: 5,
+      elevation: 3
+  },
+
+  foodTextContainer: {
+      flex: 2,
+      flexDirection: "column",
+      backgroundColor: "#fbe3ab",
+      marginLeft: 20
+  },
+
+  foodName: {
+      fontSize: 20,
+      fontFamily: "Poppins-Bold"
+  },
+
+  foodLocation: {
+      fontSize: 17,
+      color: "#383838",
+      fontFamily: "Poppins-Regular"
   },
 
   image: {
-    width: 150,
-    height: 150,
-    marginBottom: 50,
-    borderRadius: 15
+      height: 50,
+      width: 50,
+      marginVertical: 5,
+      backgroundColor: "white",
+      borderRadius: 10,
+      padding: 20,
+      elevation: 2
   },
 
-  title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    marginBottom: 50,
-    color: "#333",
-    textAlign: "center"
-  },
-
-  button: {
-    backgroundColor: '#bd0000',
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 10,
-    width: 220
-  },
-
-  button2: {
-    backgroundColor: '#6b0000',
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 10,
-    width: 220
-  },
-
-  button3: {
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 20,
-    borderColor: "#6b0000",
-    borderWidth: 2,
-    width: 220
-  },
-
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-
-  buttonText2: {
-    color: 'black',
-    fontSize: 18,
+  searchBar: {
+      backgroundColor: "#282828",
+      borderRadius: 15,
+      color: "white",
+      padding: 15,
+      marginBottom: 10,
+      fontSize: 20,
+      elevation: 5,
+      fontFamily: "Poppins-Regular"
   },
 });
 
