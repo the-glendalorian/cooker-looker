@@ -1,8 +1,8 @@
 # Cooker Looker 🥄👀
 
 A mobile app for older adults with mild cognitive impairment to search for items in their kitchens.
-Available on Android and iOS.
-Created using React Native and tracking data from (https://github.com/CMU-RASL/food-tracker)
+Available on Android and iOS!
+Created using React Native and tracking data from https://github.com/CMU-RASL/food-tracker
 
 Features on the Home Screen:
 - Clickable list of items that leads to a Results Screen
