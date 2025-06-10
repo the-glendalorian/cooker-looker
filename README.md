@@ -1,4 +1,4 @@
-# Cooker Looker
+# Cooker Looker 🥄👀
 
 A mobile app for older adults with mild cognitive impairment to search for items in their kitchens.
 
