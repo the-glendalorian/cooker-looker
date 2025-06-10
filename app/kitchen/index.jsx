@@ -5,7 +5,7 @@ import { db } from "../../FirebaseConfig";
 import { useLocalSearchParams } from "expo-router";
 
 const KitchenScreen = () => {
-    const { name, location, image } = useLocalSearchParams();
+    const { name, location, image, daysText, daysColor, firstSeen, lastSeen, shelfLife } = useLocalSearchParams();
     const [locations, setLocations] = useState([]);
     const locationsCollection = collection(db, 'locations');
 
@@ -33,6 +33,17 @@ const KitchenScreen = () => {
                     <Text style={styles.foodName}>{name}</Text>
                 </View>
             </View>
+            <Text style={{
+                fontSize: 17,
+                color: daysColor,
+                fontFamily: "Poppins-Bold",
+                marginTop: 20,
+            }}>{firstSeen} - {lastSeen} ({daysText})</Text>
+            <Text style={{
+                fontSize: 17,
+                color: daysColor,
+                fontFamily: "Poppins-Bold",
+            }}>Shelf Life: {shelfLife.toString() + " day" + ((shelfLife != 1) ? "s" : "")}</Text>
             <Text style={styles.foodLocation}>Location: {location}</Text>
             <FlatList
                 data = {locations}
@@ -72,51 +83,51 @@ const styles = StyleSheet.create({
     },
 
     foodBox: {
-      flexDirection: "row",
-    justifyContent: "flex-start",
-    backgroundColor: "#fbe3ab",
-    padding: 15,
-    borderRadius: 15,
-    marginVertical: 5,
-    elevation: 3  
-  },
+        flexDirection: "row",
+        justifyContent: "flex-start",
+        backgroundColor: "#fbe3ab",
+        padding: 15,
+        borderRadius: 15,
+        marginVertical: 5,
+        elevation: 3  
+    },
 
-  foodTextContainer: {
-      flex: 2,
-      flexDirection: "column",
-      backgroundColor: "#fbe3ab",
-      marginLeft: 20,
-      justifyContent: "center",
-      paddingLeft: 10
-  },
+    foodTextContainer: {
+        flex: 2,
+        flexDirection: "column",
+        backgroundColor: "#fbe3ab",
+        marginLeft: 20,
+        justifyContent: "center",
+        paddingLeft: 10
+    },
 
-  foodName: {
-      fontSize: 25,
-      fontFamily: "Poppins-Bold",
-  },
+    foodName: {
+        fontSize: 25,
+        fontFamily: "Poppins-Bold",
+    },
 
-  foodResults: {
-      fontSize: 25,
-      fontFamily: "Poppins-Bold",
-  },
+    foodResults: {
+        fontSize: 25,
+        fontFamily: "Poppins-Bold",
+    },
 
-  foodLocation: {
-      fontSize: 20,
-      marginTop: 20,
-      marginBottom: 10,
-      fontFamily: "Poppins-Bold"
-  },
+    foodLocation: {
+        fontSize: 20,
+        marginTop: 20,
+        marginBottom: 10,
+        fontFamily: "Poppins-Bold"
+    },
 
-  image: {
-      height: 80,
-      width: "25%",
-      marginLeft: 5,
-      backgroundColor: "white",
-      borderRadius: 10,
-      padding: 20,
-      elevation: 3,
-      marginVertical: 5
-  },
+    image: {
+        height: 80,
+        width: "25%",
+        marginLeft: 5,
+        backgroundColor: "white",
+        borderRadius: 10,
+        padding: 20,
+        elevation: 3,
+        marginVertical: 5
+    },
 
     locationItem: {
         flexDirection: "column",
@@ -137,7 +148,7 @@ const styles = StyleSheet.create({
         height: 270,
         width: "100%",
         borderRadius: 15,
-        elevation: 3
+        elevation: 5
     },
 
     foodItem: {
@@ -160,6 +171,11 @@ const styles = StyleSheet.create({
         marginTop: 10,
         textAlign: "center",
         fontFamily: "Poppins-Regular"
+    },
+
+    dayText: {
+        fontFamily: "Poppins-Bold",
+        fontSize: 16
     }
 });
 
