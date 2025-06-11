@@ -1,24 +1,53 @@
-import { View, Text, StyleSheet, FlatList, Image } from "react-native";
+import { View, Text, StyleSheet, FlatList, Image, Pressable } from "react-native";
 import { useEffect, useState } from "react";
 import { collection, getDocs, query, where } from '@react-native-firebase/firestore';
 import { db } from "../../FirebaseConfig";
 import { useLocalSearchParams } from "expo-router";
 
 const KitchenScreen = () => {
-    const { name, location, image, daysText, daysColor, firstSeen, lastSeen, shelfLife } = useLocalSearchParams();
-    const [locations, setLocations] = useState([]);
-    const locationsCollection = collection(db, 'locations');
+    const { name, location, image, daysText, daysColor, firstSeen, lastSeen, shelfLife, locationImage } = useLocalSearchParams();
+    const [otherItems, setOtherItems] = useState([]);
+    const [itemName, setItemName] = useState(name);
+    const [itemImage, setItemImage] = useState(image);
+    const [itemLocation, setItemLocation] = useState(location);
+    const [itemDaysText, setItemDaysText] = useState(daysText);
+    const [itemDaysColor, setItemDaysColor] = useState(daysColor);
+    const [itemFirstSeen, setItemFirstSeen] = useState(firstSeen);
+    const [itemLastSeen, setItemLastSeen] = useState(lastSeen);
+    const [itemShelfLife, setItemShelfLife] = useState(shelfLife);
+    const itemsCollection = collection(db, 'items');
 
     useEffect(() => {
-        fetchLocations();
+        fetchItems();
     })
 
-    const fetchLocations = async () => {
-        const q = query(locationsCollection, where("name", "==", location));
+    const fetchItems = async () => {
+        const q = query(itemsCollection, where("location", "==", itemLocation));
         const data = await getDocs(q);
-        setLocations(data.docs.map((doc) => {
-            return {...doc.data(), id: doc.id}
-        }));
+        const itemList = data.docs.map((doc) => {
+            return {...doc.data(), id: doc.id, daysLeft: getDaysLeft(doc.data()), daysText: getDaysText(doc.data()), daysColor: getDaysColor(doc.data())}
+        });
+        setOtherItems(itemList.sort((a, b) => a.daysLeft - b.daysLeft));
+    }
+
+    const getDaysLeft = (item) => {
+        const ms1 = item.firstSeen.toDate().getTime();
+        const ms2 = item.lastSeen.toDate().getTime();
+        const timeDiff = ms2 - ms1;
+        return Math.round(item.shelfLife - timeDiff / (1000 * 60 * 60 * 24));
+    };
+
+    const getDaysText = (item) => {
+        const daysLeft = getDaysLeft(item);
+        if (daysLeft <= 0) return "Expired";
+        return daysLeft.toString() + "d left";
+    }
+
+    const getDaysColor = (item) => {
+        const daysLeft = getDaysLeft(item);
+        if (daysLeft <= 0) return "#fc0303";
+        else if (daysLeft < 4) return "#ff7803";
+        return "#3dad00";
     }
     
     return (
@@ -26,51 +55,61 @@ const KitchenScreen = () => {
             <View style={styles.foodBox}>
                 <Image 
                     style={styles.image}
-                    source={{uri: image}}
+                    source={{uri: itemImage}}
                 />
                 <View style={styles.foodTextContainer}>
                     <Text style={styles.foodResults}>Results for</Text>
-                    <Text style={styles.foodName}>{name}</Text>
+                    <Text style={styles.foodName}>{itemName}</Text>
                 </View>
             </View>
+
             <Text style={{
                 fontSize: 17,
-                color: daysColor,
+                color: itemDaysColor,
                 fontFamily: "Poppins-Bold",
                 marginTop: 20,
-            }}>{firstSeen} - {lastSeen} ({daysText})</Text>
+            }}>
+                {itemFirstSeen} - {itemLastSeen} ({itemDaysText})
+            </Text>
             <Text style={{
                 fontSize: 17,
-                color: daysColor,
+                color: itemDaysColor,
                 fontFamily: "Poppins-Bold",
-            }}>Shelf Life: {shelfLife.toString() + " day" + ((shelfLife != 1) ? "s" : "")}</Text>
-            <Text style={styles.foodLocation}>Location: {location}</Text>
-            <FlatList
-                data = {locations}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => (
-                    <View style={styles.locationItem}>
-                        <Image 
-                            source={{uri: item.image}}
-                            style={styles.locationImage}
-                        />
-                        <Text style={styles.foodLocation}>Other items in {item.name}</Text>
-                        <View style={styles.locationTextContainer}>
-                            <FlatList 
-                                data = {item.items.filter((thing) => thing.name.toLowerCase() != name)}
-                                keyExtractor={(item) => item.id}
-                                renderItem={({ item }) => (
-                                    <View style={styles.foodItem}>
-                                        <Image source={{uri: item.image}} style={styles.foodImage}/>
-                                        <Text style={styles.foodItemText}>{item.name}</Text>
-                                    </View>
-                                )}
-                                horizontal={true}
-                            />
-                        </View>
-                    </View>
-                )}
-            />
+            }}>
+                Shelf Life: {itemShelfLife.toString() + " day" + ((itemShelfLife != 1) ? "s" : "")}
+            </Text>
+
+            <Text style={styles.foodLocation}>Location: {itemLocation}</Text>
+            <View style={styles.locationItem}>
+                <Image 
+                    source={{uri: locationImage}}
+                    style={styles.locationImage}
+                />
+                <Text style={styles.foodLocation}>All items in {itemLocation}</Text>
+                <View style={styles.locationTextContainer}>
+                    <FlatList 
+                        data = {otherItems}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                            <Pressable onPress={() => {
+                                setItemName(item.name);
+                                setItemImage(item.image);
+                                setItemDaysText(item.daysText);
+                                setItemDaysColor(item.daysColor);
+                                setItemFirstSeen(item.firstSeen.toDate().toDateString().slice(4));
+                                setItemLastSeen(item.lastSeen.toDate().toDateString().slice(4));
+                                setItemShelfLife(item.shelfLife);
+                            }} style={styles.foodItem}>
+                                <View>
+                                    <Image source={{uri: item.image}} style={styles.foodImage}/>
+                                    <Text style={styles.foodItemText}>{item.name}</Text>
+                                </View>
+                            </Pressable>
+                        )}
+                        horizontal={true}
+                    />
+                </View>
+            </View>
         </View>
     );
 }

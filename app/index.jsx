@@ -1,39 +1,27 @@
-import { Text, View, StyleSheet, Image, TextInput, FlatList } from "react-native";
+import { Text, View, StyleSheet, Image, TextInput, FlatList, Pressable } from "react-native";
 import { Icon } from "react-native-elements";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { collection, getDocs, query, where } from '@react-native-firebase/firestore';
 import { db } from "../FirebaseConfig";
-import {
-  useFonts,
-  Poppins_400Regular,
-  Poppins_700Bold
-} from "@expo-google-fonts/poppins";
+import { useFonts, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 
 const HomeScreen = () => {
   const router = useRouter();
-
-  useFonts({
-    Poppins_400Regular,
-    Poppins_700Bold
-  });
-
   const [foodItems, setFoodItems] = useState([]);
   const [searchValue, setSearchValue] = useState("");
   const itemsCollection = collection(db, 'items');
 
-  useEffect(() => {
-      fetchItems();
-  }, [searchValue]);
+  useFonts({ Poppins_400Regular, Poppins_700Bold });
+  useEffect(() => {fetchItems()}, [searchValue]);
 
   const fetchItems = async () => {
       const q = query(itemsCollection, where("name", ">=", searchValue.toLowerCase()), where("name", "<=", searchValue.toLowerCase() + "\uf8ff"));
       const data = await getDocs(q);
       const itemList = data.docs.map((doc) => {
-          return {...doc.data(), id: doc.id}
+        return {...doc.data(), id: doc.id, daysLeft: getDaysLeft(doc.data()), daysText: getDaysText(doc.data()), daysColor: getDaysColor(doc.data())}
       });
-
-      setFoodItems(itemList.sort((a, b) => getDaysLeft(a) - getDaysLeft(b)));
+      setFoodItems(itemList.sort((a, b) => a.daysLeft - b.daysLeft));
   };
 
   const getDaysLeft = (item) => {
@@ -43,17 +31,31 @@ const HomeScreen = () => {
     return Math.round(item.shelfLife - timeDiff / (1000 * 60 * 60 * 24));
   }
 
-  getDaysText = (item) => {
+  const getDaysText = (item) => {
     const daysLeft = getDaysLeft(item);
     if (daysLeft <= 0) return "Expired";
     return daysLeft.toString() + "d left";
   }
 
-  const getDaysStyle = (item) => {
+  const getDaysColor = (item) => {
     const daysLeft = getDaysLeft(item);
     if (daysLeft <= 0) return "#fc0303";
     else if (daysLeft < 4) return "#ff7803";
     return "#3dad00";
+  }
+
+  const getParams = (item) => {
+    return { 
+      name: item.name, 
+      location: item.location, 
+      image: item.image, 
+      daysText: item.daysText, 
+      daysColor: item.daysColor, 
+      firstSeen: item.firstSeen.toDate().toDateString().slice(4), 
+      lastSeen: item.lastSeen.toDate().toDateString().slice(4),
+      shelfLife: item.shelfLife,
+      locationImage: item.locationImage
+    };
   }
 
   return (
@@ -72,11 +74,13 @@ const HomeScreen = () => {
         data = {foodItems}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
+          <Pressable onPress={() => router.push({pathname: "/kitchen", params: getParams(item)})}>
             <View style={styles.foodItem}>
                 <Image 
-                    style={styles.image}
-                    source={{uri: item.image}}
+                  style={styles.image}
+                  source={{uri: item.image}}
                 />
+                
                 <View style={styles.foodTextContainer}>
                     <Text style={styles.foodName}>{item.name}</Text>
                     <View style={styles.foodTextbox}>
@@ -85,11 +89,11 @@ const HomeScreen = () => {
                         fontSize: 16,
                         color: "white",
                         fontFamily: "Poppins-Bold",
-                        backgroundColor: getDaysStyle(item),
+                        backgroundColor: item.daysColor,
                         borderRadius: 15,
                         paddingTop: 3,
                         paddingHorizontal: 10,
-                      }}>{getDaysText(item)}</Text>
+                      }}>{item.daysText}</Text>
                     </View>
                 </View>
 
@@ -98,22 +102,11 @@ const HomeScreen = () => {
                   name="arrow-forward"
                   type="material-icons"
                   size={20}
-                  onPress={() => router.push({
-                    pathname: "/kitchen",
-                    params: { 
-                      name: item.name, 
-                      location: item.location, 
-                      image: item.image, 
-                      daysText: getDaysText(item), 
-                      daysColor: getDaysStyle(item), 
-                      firstSeen: item.firstSeen.toDate().toDateString().slice(4), 
-                      lastSeen: item.lastSeen.toDate().toDateString().slice(4),
-                      shelfLife: item.shelfLife
-                    }
-                  })}
+                  onPress={() => router.push({pathname: "/kitchen", params: getParams(item)})}
                   color={"#6b0000"}
                 />
             </View>
+          </Pressable>
         )}
       />
     </View>
