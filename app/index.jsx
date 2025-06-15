@@ -19,10 +19,21 @@ const HomeScreen = () => {
       const q = query(itemsCollection, where("name", ">=", searchValue.toLowerCase()), where("name", "<=", searchValue.toLowerCase() + "\uf8ff"));
       const data = await getDocs(q);
       const itemList = data.docs.map((doc) => {
-        return {...doc.data(), id: doc.id, daysLeft: getDaysLeft(doc.data()), daysText: getDaysText(doc.data()), daysColor: getDaysColor(doc.data())}
+        return {
+          ...doc.data(), 
+          id: doc.id, 
+          daysLeft: getDaysLeft(doc.data()), 
+          daysText: getDaysText(doc.data()), 
+          daysColor: getDaysColor(doc.data()),
+          days: getDays(doc.data())
+        }
       });
       setFoodItems(itemList.sort((a, b) => a.daysLeft - b.daysLeft));
   };
+
+  const getDays = (item) => {
+    return item.firstSeen.toDate().toDateString().slice(4) + " - " + item.lastSeen.toDate().toDateString().slice(4);
+  }
 
   const getDaysLeft = (item) => {
     const ms1 = item.firstSeen.toDate().getTime();
@@ -45,16 +56,21 @@ const HomeScreen = () => {
   }
 
   const getParams = (item) => {
+    const allItems = foodItems.filter((foodItem) => foodItem.location == item.location);
     return { 
       name: item.name, 
       location: item.location, 
       image: item.image, 
       daysText: item.daysText, 
       daysColor: item.daysColor, 
-      firstSeen: item.firstSeen.toDate().toDateString().slice(4), 
-      lastSeen: item.lastSeen.toDate().toDateString().slice(4),
+      firstSeen: JSON.stringify(item.firstSeen), 
+      lastSeen: JSON.stringify(item.lastSeen),
       shelfLife: item.shelfLife,
-      locationImage: item.locationImage
+      locationImage: item.locationImage,
+      id: item.id,
+      allItems: JSON.stringify(allItems),
+      days: item.days,
+      sus: item.sus
     };
   }
 
@@ -84,7 +100,7 @@ const HomeScreen = () => {
                 <View style={styles.foodTextContainer}>
                     <Text style={styles.foodName}>{item.name}</Text>
                     <View style={styles.foodTextbox}>
-                      <Text style={styles.foodLocation}>{item.location}</Text>
+                      <Text style={styles.foodLocation}>{item.location} {item.sus ? String.fromCodePoint("0x1F914") : ""}</Text>
                       <Text style={{
                         fontSize: 16,
                         color: "white",
@@ -153,7 +169,7 @@ const styles = StyleSheet.create({
       fontSize: 17,
       color: "#383838",
       fontFamily: "Poppins-Regular",
-      marginRight: 20
+      marginRight: 15
   },
 
   foodDays: {
