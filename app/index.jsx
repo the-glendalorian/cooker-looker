@@ -2,7 +2,7 @@ import { Text, View, StyleSheet, Image, TextInput, FlatList, Pressable } from "r
 import { Icon } from "react-native-elements";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, where } from '@react-native-firebase/firestore';
+import { collection, getDocs, query } from '@react-native-firebase/firestore';
 import { db } from "../FirebaseConfig";
 import { useFonts, Poppins_400Regular, Poppins_700Bold } from "@expo-google-fonts/poppins";
 
@@ -11,12 +11,13 @@ const HomeScreen = () => {
   const [foodItems, setFoodItems] = useState([]);
   const [searchValue, setSearchValue] = useState("");
   const itemsCollection = collection(db, 'items');
+  const [filteredItems, setFilteredItems] = useState([]);
 
   useFonts({ Poppins_400Regular, Poppins_700Bold });
   useEffect(() => {fetchItems()}, [searchValue]);
 
   const fetchItems = async () => {
-      const q = query(itemsCollection, where("name", ">=", searchValue.toLowerCase()), where("name", "<=", searchValue.toLowerCase() + "\uf8ff"));
+      const q = query(itemsCollection);
       const data = await getDocs(q);
       const itemList = data.docs.map((doc) => {
         return {
@@ -28,7 +29,15 @@ const HomeScreen = () => {
           days: getDays(doc.data())
         }
       });
-      setFoodItems(itemList.sort((a, b) => a.daysLeft - b.daysLeft));
+
+      const allItems = itemList.sort((a, b) => {
+        if (a.sus != b.sus) {
+          return b.sus - a.sus;
+        }
+        return a.daysLeft - b.daysLeft;
+      });
+      setFoodItems(allItems);
+      setFilteredItems(allItems.filter((item) => item.name.includes(searchValue.toLowerCase())))
   };
 
   const getDays = (item) => {
@@ -53,6 +62,18 @@ const HomeScreen = () => {
     if (daysLeft <= 0) return "#fc0303";
     else if (daysLeft < 4) return "#ff7803";
     return "#3dad00";
+  }
+
+  const getSusEmoji = (item) => {
+    if (item.sus == 2) return String.fromCodePoint("0x1F630");
+    else if (item.sus == 1) return String.fromCodePoint("0x1F914");
+    return String.fromCodePoint("0x1F600");
+  }
+
+  const getSusColor = (item) => {
+    if (item.sus == 2) return "#ffb3a3";
+    else if (item.sus == 1) return "#ffd3a3";
+    return "#fbe3ab";
   }
 
   const getParams = (item) => {
@@ -87,20 +108,34 @@ const HomeScreen = () => {
         placeholderTextColor={"white"}
       />
       <FlatList
-        data = {foodItems}
+        data = {filteredItems}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <Pressable onPress={() => router.push({pathname: "/kitchen", params: getParams(item)})}>
-            <View style={styles.foodItem}>
+            <View style={{
+              flexDirection: "row",
+              justifyContent: "flex-start",
+              backgroundColor: getSusColor(item),
+              padding: 15,
+              borderRadius: 15,
+              marginVertical: 5,
+              elevation: 3
+            }}>
                 <Image 
                   style={styles.image}
                   source={{uri: item.image}}
                 />
                 
-                <View style={styles.foodTextContainer}>
+                <View style={{
+                  flex: 2,
+                  flexDirection: "column",
+                  backgroundColor: "#fbe3ab",
+                  marginLeft: 20,
+                  backgroundColor: getSusColor(item)
+                }}>
                     <Text style={styles.foodName}>{item.name}</Text>
                     <View style={styles.foodTextbox}>
-                      <Text style={styles.foodLocation}>{item.location} {item.sus ? String.fromCodePoint("0x1F914") : ""}</Text>
+                      <Text style={styles.foodLocation}>{item.location} {getSusEmoji(item)}</Text>
                       <Text style={{
                         fontSize: 16,
                         color: "white",
@@ -135,23 +170,6 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#fff",
     flexDirection: "column",
-  },
-
-  foodItem: {
-      flexDirection: "row",
-      justifyContent: "flex-start",
-      backgroundColor: "#fbe3ab",
-      padding: 15,
-      borderRadius: 15,
-      marginVertical: 5,
-      elevation: 3
-  },
-
-  foodTextContainer: {
-      flex: 2,
-      flexDirection: "column",
-      backgroundColor: "#fbe3ab",
-      marginLeft: 20
   },
 
   foodName: {

@@ -25,7 +25,7 @@ const KitchenScreen = () => {
         shelfLife: shelfLife,
         id: id,
         days: days,
-        sus: sus == "true" ? true : false
+        sus: parseInt(sus)
     });
 
     useEffect(() => {
@@ -56,9 +56,26 @@ const KitchenScreen = () => {
         return getTimestamp(item.firstSeen).toDate().toDateString().slice(4) + " - " + getTimestamp(item.lastSeen).toDate().toDateString().slice(4);
     }
 
+    const getSusEmoji = (item) => {
+        if (item.sus == 2) return String.fromCodePoint("0x1F630");
+        else if (item.sus == 1) return String.fromCodePoint("0x1F914");
+        return String.fromCodePoint("0x1F600");
+    }
+
+    const getSusColor = (item) => {
+        if (item.sus == 2) return "#ffb3a3";
+        else if (item.sus == 1) return "#ffd3a3";
+        return "#fbe3ab";
+    }
+
     const updateLocation = (targetLocation) => {
         const foundLocation = locations.find(location => location.name == targetLocation);
-        const itemList = foundLocation.items.sort((a, b) => a.daysLeft - b.daysLeft);
+        const itemList = foundLocation.items.sort((a, b) => {
+            if (a.sus != b.sus) {
+                return b.sus - a.sus;
+            }
+            return a.daysLeft - b.daysLeft;
+        });
         setOtherItems(itemList);
 
         if (currentLocation != targetLocation) {
@@ -93,7 +110,7 @@ const KitchenScreen = () => {
                     shelfLife: 0,
                     id: -1,
                     days: "",
-                    sus: false
+                    sus: 0
                 });
             }
         }
@@ -110,31 +127,48 @@ const KitchenScreen = () => {
     
     return (
         <View style={styles.container}>
-            <View style={styles.foodBox}>
+            <View style={{
+                flexDirection: "row",
+                justifyContent: "flex-start",
+                backgroundColor: getSusColor(currentItem),
+                padding: 10,
+                borderRadius: 15,
+                marginVertical: 5,
+                elevation: 3 
+            }}>
                 <Image 
                     style={styles.image}
                     source={{uri: currentItem.image}}
                 />
-                <View style={styles.foodTextContainer}>
+                <View style={{
+                    flex: 2,
+                    flexDirection: "column",
+                    backgroundColor: "#fbe3ab",
+                    marginLeft: 20,
+                    justifyContent: "center",
+                    backgroundColor: getSusColor(currentItem)
+                }}>
                     <Text style={styles.foodResults}>{currentItem.name != "" ? "Results for" : "No available items"} {currentItem.name}</Text>
-                    <Text style={{
-                        fontSize: 15,
-                        color: currentItem.daysColor,
-                        fontFamily: "Poppins-Bold",
-                    }}>
-                        {currentItem.days}
-                    </Text>
-                    <Text style={{
-                        fontSize: 15,
-                        color: currentItem.daysColor,
-                        fontFamily: "Poppins-Bold",
-                    }}>
-                        Shelf Life: {currentItem.shelfLife.toString() + " day" + ((currentItem.shelfLife != 1) ? "s" : "")} ({currentItem.daysText})
-                    </Text>
+                    <Text style={styles.foodText}>{currentItem.days}</Text>
+                    <View style={styles.foodItemContainer}>
+                        <Text style={styles.foodText}>{currentItem.shelfLife == 0 ? "" : "Shelf Life: " + currentItem.shelfLife.toString() + " day" + ((currentItem.shelfLife != 1) ? "s" : "")}</Text>
+                        <Text style={{
+                            fontSize: 14,
+                            color: "white",
+                            fontFamily: "Poppins-Bold",
+                            backgroundColor: currentItem.daysColor,
+                            borderRadius: 15,
+                            paddingTop: 3,
+                            paddingHorizontal: 10,
+                            marginLeft: 10
+                        }}>
+                            {currentItem.daysText}
+                        </Text>
+                    </View>
                 </View>
             </View>
 
-            <Text style={styles.foodLocation}>Location: {currentLocation} {currentItem.sus ? String.fromCodePoint("0x1F914") : ""}</Text>
+            <Text style={styles.foodLocation}>Location: {currentLocation} {getSusEmoji(currentItem)}</Text>
             <Image 
                 source={{uri: currentLocationImage}}
                 style={styles.locationImage}
@@ -211,32 +245,24 @@ const styles = StyleSheet.create({
         backgroundColor: "#fff",
     },
 
-    foodBox: {
-        flexDirection: "row",
-        justifyContent: "flex-start",
-        backgroundColor: "#fbe3ab",
-        padding: 10,
-        borderRadius: 15,
-        marginVertical: 5,
-        elevation: 3  
-    },
-
-    foodTextContainer: {
-        flex: 2,
-        flexDirection: "column",
-        backgroundColor: "#fbe3ab",
-        marginLeft: 20,
-        justifyContent: "center",
-    },
-
     foodName: {
         fontSize: 20,
         fontFamily: "Poppins-Bold",
     },
 
     foodResults: {
-        fontSize: 20,
+        fontSize: 19,
         fontFamily: "Poppins-Bold",
+    },
+
+    foodText: {
+        fontSize: 16,
+        fontFamily: "Poppins-Regular",
+        color: "#383838"
+    },
+
+    foodItemContainer: {
+        flexDirection: "row"
     },
 
     foodLocation: {
