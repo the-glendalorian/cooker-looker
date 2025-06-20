@@ -73,7 +73,7 @@ const HomeScreen = () => {
   const getSusColor = (item) => {
     if (item.sus == 2) return "#ffb3a3";
     else if (item.sus == 1) return "#ffd3a3";
-    return "#fbe3ab";
+    return "#ffe8a3";
   }
 
   const getParams = (item) => {
@@ -129,7 +129,6 @@ const HomeScreen = () => {
                 <View style={{
                   flex: 2,
                   flexDirection: "column",
-                  backgroundColor: "#fbe3ab",
                   marginLeft: 20,
                   backgroundColor: getSusColor(item)
                 }}>

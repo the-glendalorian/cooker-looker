@@ -65,7 +65,7 @@ const KitchenScreen = () => {
     const getSusColor = (item) => {
         if (item.sus == 2) return "#ffb3a3";
         else if (item.sus == 1) return "#ffd3a3";
-        return "#fbe3ab";
+        return "#ffe8a3";
     }
 
     const updateLocation = (targetLocation) => {
@@ -104,7 +104,7 @@ const KitchenScreen = () => {
                     name: "",
                     image: "https://res.cloudinary.com/daqnsb9zx/image/upload/v1749917245/question_kcusxh.jpg",
                     daysText: "",
-                    daysColor: "#fbe3ab",
+                    daysColor: "#ffeea3",
                     firstSeen: "", 
                     lastSeen: "", 
                     shelfLife: 0,
@@ -143,7 +143,6 @@ const KitchenScreen = () => {
                 <View style={{
                     flex: 2,
                     flexDirection: "column",
-                    backgroundColor: "#fbe3ab",
                     marginLeft: 20,
                     justifyContent: "center",
                     backgroundColor: getSusColor(currentItem)
